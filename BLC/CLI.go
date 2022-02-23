@@ -61,6 +61,7 @@ func (cli *CLI)Run(){
 	switch os.Args[1] {
 	case "addblock":
 		err:=addBlockCmd.Parse(os.Args[2:])
+
 		if err!=nil{
 			log.Panicf("parse cmd of addblock failed! %v\n",err.Error())
 		}
