@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/boltdb/bolt v1.3.1
+	github.com/docker/docker v20.10.12+incompatible
 	github.com/marmotedu/component-base v1.6.2
 	github.com/marmotedu/iam v1.6.2
 	github.com/sirupsen/logrus v1.8.1

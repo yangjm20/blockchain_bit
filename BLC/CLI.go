@@ -30,13 +30,25 @@ func IsValidArgs()  {
 
 //添加区块
 func (cli *CLI)addBlock(data string) {
-	cli.BC.AddBlock([]byte(data))
+	if dbExists()==false{
+		log.Info("数据库不存在")
+		os.Exit(1)
+	}
+	blockchain:=BlockchainObject()
+	defer blockchain.DB.Close()
+	blockchain.AddBlock([]byte(data))
 }
 
 //输出区块链信息
 
 func (cli *CLI)printchain() {
-	cli.BC.PrintChain()
+	if dbExists()==false{
+		log.Info("数据库不存在")
+		os.Exit(1)
+	}
+	blockchain:=BlockchainObject()
+	defer blockchain.DB.Close()
+	blockchain.PrintChain()
 }
 
 //创建创世区块

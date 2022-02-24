@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/fabric_assert/blockchain_bit/BLC"
 	"github.com/fabric_assert/blockchain_bit/pkg/log"
 )
@@ -34,7 +33,7 @@ func main() {
 	//}
 
 
-	blockchain:=BLC.CreateBlockChainWithGenesisBlock()
+	//blockchain:=BLC.CreateBlockChainWithGenesisBlock()
 	//
 	//
 	//db:=blockchain.DB
@@ -47,10 +46,8 @@ func main() {
 	//
 	//defer db.Close()
 	//BLC.PrintUsage()
-	cli:=BLC.CLI{blockchain}
+	cli:=BLC.CLI{}
 	cli.Run()
-
-	fmt.Println("aa")
 
 
 

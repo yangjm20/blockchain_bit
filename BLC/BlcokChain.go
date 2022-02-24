@@ -1,6 +1,7 @@
 package BLC
 
 import (
+	"errors"
 	"github.com/boltdb/bolt"
 	"github.com/fabric_assert/blockchain_bit/pkg/log"
 	"math/big"
@@ -34,25 +35,8 @@ func CreateBlockChainWithGenesisBlock() *BlockChain {
 
 	if dbExists(){
 		log.Info("创世区块已经存在...")
-		//创建或者打开数据库
-		db, err := bolt.Open(DbName, 0600, nil)
-		if err != nil {
-			log.Panicf("open the db failed : %v\n", err.Error())
-		}
+		os.Exit(1)
 
-		var blockchain *BlockChain
-		err=db.View(func(tx *bolt.Tx) error {
-			b:=tx.Bucket([]byte(BlockTableName))
-			hash:=b.Get([]byte("1"))
-			blockchain=&BlockChain{db,hash}
-			return nil
-		})
-
-		if nil!=err{
-			log.Panicf("get the block from db failed! %v",err.Error())
-		}
-
-		return blockchain
 	}
 
 	db, err := bolt.Open(DbName, 0600, nil)
@@ -150,5 +134,29 @@ func (bc *BlockChain) PrintChain() {
 		}
 
 	}
+
+}
+
+func BlockchainObject()*BlockChain{
+	db,err:=bolt.Open(DbName,0600,nil)
+	if nil!=err{
+		log.Panicf("get the object of blockchain failed! %v \n",err.Error())
+	}
+
+	var tip []byte
+	err=db.View(func(tx *bolt.Tx) error {
+		b:=tx.Bucket([]byte(BlockTableName))
+		if b!=nil{
+			tip=b.Get([]byte("1")) //最新区块的hash值
+			return nil
+		}
+		return errors.New("数据库无数据")
+	})
+	if err!=nil{
+		log.Panicf("the database is null %v ",err.Error())
+
+	}
+
+	return &BlockChain{db,tip}
 
 }
