@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
-	"github.com/fabric_assert/blockchain_bit/pkg/utils"
 	"log"
 
 	"time"
@@ -15,13 +14,14 @@ type Block struct {
 	Heigth       int64 //区块高度
 	PreBlockHash []byte
 	Hash         []byte
-	Data         []byte
+	//Data         []byte
+	Txs []*Transaction
 	Nonce        int64 //用来生成工作量证明的hash
 }
 
-func NewBlock(height int64, preBlockHash []byte, data []byte) *Block {
+func NewBlock(height int64, preBlockHash []byte, txs []*Transaction) *Block {
 	var block Block
-	block = Block{Heigth: height, PreBlockHash: preBlockHash, Data: data, TimeStamp: time.Now().Unix()}
+	block = Block{Heigth: height, PreBlockHash: preBlockHash,Txs: txs, TimeStamp: time.Now().Unix()}
 	//block.SetHash()
 	pow := NewProofOfWork(&block)
 	hash, nonce := pow.Run()
@@ -30,16 +30,16 @@ func NewBlock(height int64, preBlockHash []byte, data []byte) *Block {
 	return &block
 }
 
-func (b *Block) SetHash() {
-	timeStampBytes := utils.IntToHex(b.TimeStamp)
-	heightBytes := utils.IntToHex(b.Heigth)
-	blockBytes := bytes.Join([][]byte{heightBytes, timeStampBytes, b.PreBlockHash, b.Data}, []byte{})
-	hash := sha256.Sum256(blockBytes)
-	b.Hash = hash[:]
-}
+//func (b *Block) SetHash() {
+//	timeStampBytes := utils.IntToHex(b.TimeStamp)
+//	heightBytes := utils.IntToHex(b.Heigth)
+//	blockBytes := bytes.Join([][]byte{heightBytes, timeStampBytes, b.PreBlockHash, b.Data}, []byte{})
+//	hash := sha256.Sum256(blockBytes)
+//	b.Hash = hash[:]
+//}
 
-func CreateGenesisBlock(data string) *Block {
-	block := NewBlock(1, nil, []byte(data))
+func CreateGenesisBlock(txs []*Transaction) *Block {
+	block := NewBlock(1, nil, txs)
 
 	return block
 }
@@ -54,6 +54,18 @@ func (block *Block) Serialize() []byte{
 
 	return result.Bytes()
 }
+
+//把区块中的所有交易结构转换成[]byte
+
+func (block *Block)HashTransactions()  []byte{
+	var hashBytes [][]byte
+	for _,tx:=range block.Txs{
+		hashBytes=append(hashBytes,tx.TxHash)
+	}
+	hash:=sha256.Sum256(bytes.Join(hashBytes,[]byte{}))
+	return hash[:]
+}
+
 
 //反序列化，将字节数组结构反序列化为区块结构
 func DeserializeBlock(blockBytes []byte) *Block{

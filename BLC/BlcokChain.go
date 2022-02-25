@@ -31,7 +31,7 @@ func dbExists() bool {
 }
 
 //初始化区块链
-func CreateBlockChainWithGenesisBlock() *BlockChain {
+func CreateBlockChainWithGenesisBlock(address string) *BlockChain {
 
 	if dbExists(){
 		log.Info("创世区块已经存在...")
@@ -56,7 +56,10 @@ func CreateBlockChainWithGenesisBlock() *BlockChain {
 			}
 		}
 		if nil != b {
-			genesisBlock := CreateGenesisBlock("the init of blockchain")
+
+			//生成创世区块链
+			tx:=NewCoinbaseTransaction(address)
+			genesisBlock := CreateGenesisBlock([]*Transaction{tx})
 			err := b.Put(genesisBlock.Hash, genesisBlock.Serialize())
 			if nil != err {
 				log.Panicf("put the data of genesisBlock to db failed %v\n", err.Error())
@@ -78,7 +81,7 @@ func CreateBlockChainWithGenesisBlock() *BlockChain {
 	return &BlockChain{db, blockHash}
 }
 
-func (bc *BlockChain) AddBlock(data []byte) {
+func (bc *BlockChain) AddBlock(txs []*Transaction) {
 	//newBlock := NewBlock(height, preBlockHash, data)
 	//bc.Blocks = append(bc.Blocks, newBlock)
 
@@ -93,7 +96,9 @@ func (bc *BlockChain) AddBlock(data []byte) {
 			blockBytes := b.Get(bc.Tip)
 			latest_block := DeserializeBlock(blockBytes)
 			//4.创建新区块
-			newblock := NewBlock(latest_block.Heigth+1, latest_block.Hash, data)
+
+
+			newblock := NewBlock(latest_block.Heigth+1, latest_block.Hash, txs)
 			err := b.Put(newblock.Hash, newblock.Serialize())
 			if err != nil {
 				log.Panicf("put the data of new block into db failed! %v \n", err.Error())
@@ -125,7 +130,24 @@ func (bc *BlockChain) PrintChain() {
 	for {
 		log.Info("--------------------------------------")
 		block=bcit.Next()
-		log.Infof("data:%v, height :%v\n", string(block.Data), block.Heigth)
+		log.Infof("data:%v, height :%v\n", block.Txs, block.Heigth)
+
+		for _,tx:= range block.Txs{
+			log.Infof("\t\t tx-hash:%v \n",tx.TxHash)
+			for _,vin:= range tx.Vins{
+				log.Infof("\t\t tx-hash:%v \n",vin.TxHash)
+				log.Infof("\t\t vout:%v \n",vin.Vout)
+				log.Infof("\t\t scriptSig:%v \n",vin.ScriptSig)
+			}
+
+			for _,out:= range tx.Vout{
+				log.Infof("\t\t tx-hash:%v \n",out.Value)
+				log.Infof("\t\t vout:%v \n",out.ScriptPubkey)
+
+			}
+
+		}
+
 
 		var hashInt big.Int
 		hashInt.SetBytes(block.PreBlockHash)
