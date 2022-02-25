@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"github.com/fabric_assert/blockchain_bit/pkg/log"
 )
 
@@ -15,3 +16,10 @@ func IntToHex(data int64) []byte  {
 	return buffer.Bytes()
 }
 
+func JSONToArray(jsonString string) []string  {
+	var strArr []string
+	if err:=json.Unmarshal([]byte(jsonString),&strArr);err!=nil{
+		log.Panicf("json to []string failed! %v\n",err.Error())
+	}
+	return strArr
+}

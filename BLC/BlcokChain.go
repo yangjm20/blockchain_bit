@@ -182,3 +182,50 @@ func BlockchainObject()*BlockChain{
 	return &BlockChain{db,tip}
 
 }
+
+//挖矿打通过接收交易，进行打包确认，最终生成新的区块
+//t
+func (bc *BlockChain)MineNewBlock(from ,to ,amount []string)  {
+	//接收交易
+	var txs []*Transaction //要打包的交易
+	//打包交易
+
+
+
+	//生成新的区块
+	var block *Block
+	//从数据中获取最新的区块
+	bc.DB.View(func(tx *bolt.Tx) error {
+		b:=tx.Bucket([]byte(BlockTableName))
+		if nil!=b{
+			blockBytes:=b.Get(bc.Tip)
+			block=DeserializeBlock(blockBytes)
+
+			return nil
+		}
+
+		return errors.New("数据库表中无数据")
+	})
+	block=NewBlock(block.Heigth+1,block.Hash,txs)
+
+	//持久化新的区块
+	bc.DB.Update(func(tx *bolt.Tx) error {
+		b:=tx.Bucket([]byte(BlockTableName))
+		if nil!=b{
+
+			err:=b.Put(block.Hash,block.Serialize())
+			if err != nil {
+				log.Panicf("put the data of new block into db failed! %v \n", err.Error())
+			}
+
+			err = b.Put([]byte("1"), block.Hash)
+			if nil != err {
+				log.Panicf("put the hash of the newest block into db failed ! %v", err.Error())
+			}
+
+			bc.Tip=block.Hash
+			return nil
+		}
+		return errors.New("数据库表不存在")
+	})
+}
