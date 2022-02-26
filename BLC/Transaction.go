@@ -47,3 +47,21 @@ func NewCoinbaseTransaction(address string) *Transaction{
 }
 
 //生成转账交易
+func NewSimpleTransaction(from string,to string ,amount int)  *Transaction{
+	var txInputs []*TxInput
+	var txOutputs []*TxOutput
+
+	//消费
+	txInput:=&TxInput{[]byte("8df099565e4bb780b86082988e363841916fed7528738e02750708914f1c3c69"),0,from}
+	txInputs=append(txInputs,txInput)
+
+	txOutPut:=&TxOutput{int64(amount),to}
+	txOutputs=append(txOutputs,txOutPut)
+	txOutPut=&TxOutput{10-int64(amount),from}
+	txOutputs=append(txOutputs,txOutPut)
+
+	tx:=&Transaction{nil,txInputs,txOutputs}
+	tx.HashTransaction()
+
+	return tx
+}

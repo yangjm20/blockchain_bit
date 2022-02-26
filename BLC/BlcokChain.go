@@ -2,10 +2,12 @@ package BLC
 
 import (
 	"errors"
+	"fmt"
 	"github.com/boltdb/bolt"
 	"github.com/fabric_assert/blockchain_bit/pkg/log"
 	"math/big"
 	"os"
+	"strconv"
 )
 
 const DbName = "bc.db"          //存储区块数据的数据库文件
@@ -128,22 +130,26 @@ func (bc *BlockChain) PrintChain() {
 	bcit:=bc.Iterator()
 
 	for {
-		log.Info("--------------------------------------")
+		fmt.Println("--------------------------------------")
 		block=bcit.Next()
-		log.Infof("data:%v, height :%v\n", block.Txs, block.Heigth)
+		fmt.Printf("\tHeight:%d\n",block.Heigth)
+		fmt.Printf("\tTimeStamp:%d\n",block.TimeStamp)
+		fmt.Printf("\tPreHash:%x\n",block.PreBlockHash)
+		fmt.Printf("\tHash:%x\n",block.Hash)
+		fmt.Printf("\ttTransaction:%v\n",block.Txs)
 
 		for _,tx:= range block.Txs{
-			log.Infof("\t\t tx-hash:%v \n",tx.TxHash)
+			fmt.Printf("\t\t tx-hash:%x \n",tx.TxHash)
+			fmt.Println("\t\t输入...")
 			for _,vin:= range tx.Vins{
-				log.Infof("\t\t tx-hash:%v \n",vin.TxHash)
-				log.Infof("\t\t vout:%v \n",vin.Vout)
-				log.Infof("\t\t scriptSig:%v \n",vin.ScriptSig)
+				fmt.Printf("\t\t vin-tx-hash:%s \n",vin.TxHash)
+				fmt.Printf("\t\t vout:%v \n",vin.Vout)
+				fmt.Printf("\t\t scriptSig:%v \n",vin.ScriptSig)
 			}
-
+			fmt.Println("\t\t输出...")
 			for _,out:= range tx.Vout{
-				log.Infof("\t\t tx-hash:%v \n",out.Value)
-				log.Infof("\t\t vout:%v \n",out.ScriptPubkey)
-
+				fmt.Printf("\t\t vout-value:%v \n",out.Value)
+				fmt.Printf("\t\t vout:%v \n",out.ScriptPubkey)
 			}
 
 		}
@@ -189,9 +195,9 @@ func (bc *BlockChain)MineNewBlock(from ,to ,amount []string)  {
 	//接收交易
 	var txs []*Transaction //要打包的交易
 	//打包交易
-
-
-
+	value,_:=strconv.Atoi(amount[0])
+	tx:=NewSimpleTransaction(from[0],to[0],value)
+	txs=append(txs,tx)
 	//生成新的区块
 	var block *Block
 	//从数据中获取最新的区块
