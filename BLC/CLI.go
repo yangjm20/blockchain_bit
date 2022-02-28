@@ -20,6 +20,7 @@ func PrintUsage() {
 	fmt.Printf("\taddblock -data  DATA  -- 交易数据.\n")
 	fmt.Printf("\tprintblockchain -- 输出区块链的信息.\n")
 	fmt.Printf("\tsend -from addr -to addr -amout AMOUNT -- 转账.\n")
+	fmt.Printf("\tgetbalance -from addr  -- 查询余额.\n")
 }
 
 //校验，如果只输入了程序命令，就输出指令用法并且退出程序
@@ -30,6 +31,13 @@ func IsValidArgs() {
 	}
 }
 
+//查询余额
+func (cli *CLI)getBalance(from string) {
+	blockchain := BlockchainObject() //获取区块链对象
+	defer blockchain.DB.Close()
+	amount:=blockchain.getBalance(from)
+	fmt.Printf("\t地址：%s的余额为%d\n",from,amount)
+}
 func (cli *CLI) send(from, to, amount []string) {
 	if dbExists() == false {
 		log.Info("数据库不存在")
@@ -78,6 +86,7 @@ func (cli *CLI) Run() {
 	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
 	createBlcWithGenesisCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
+	getBalanceCmd := flag.NewFlagSet("getbalance", flag.ExitOnError)
 
 	//3. 获取命令行参数
 	flagAddBlockArg := addBlockCmd.String("data", "send 100 BTC to everyone", "交易数据...")
@@ -85,9 +94,15 @@ func (cli *CLI) Run() {
 	flagFromArg := sendCmd.String("from", "", "发送者")
 	flagToArg := sendCmd.String("to", "", "接收者")
 	flagAmountArg := sendCmd.String("amount", "", "转账金额")
+	flagBalanceArg := getBalanceCmd.String("from", "", "转账金额")
 	//flagPrintChainArg:=printChainCmd.String("data","send 100 BTC to everyone","交易数据")
 	//flagcreateBlcWithGenesisArg:=createBlcWithGenesisCmd.String("data","send 100 BTC to everyone","交易数据")
 	switch os.Args[1] {
+	case "getbalance":
+		err:=getBalanceCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panicf("parse cmd of getbalance failed! %v\n", err.Error())
+		}
 	case "send":
 		err := sendCmd.Parse(os.Args[2:])
 		if err != nil {
@@ -112,6 +127,16 @@ func (cli *CLI) Run() {
 	default:
 		PrintUsage()
 		os.Exit(1)
+	}
+
+	//添加查询余额命令
+	if getBalanceCmd.Parsed(){
+		if *flagBalanceArg==""{
+			PrintUsage()
+			os.Exit(1)
+		}
+
+		cli.getBalance(*flagBalanceArg)
 	}
 
 	//添加转账命令

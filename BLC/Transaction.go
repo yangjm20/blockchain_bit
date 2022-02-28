@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
+	"encoding/hex"
+	"fmt"
 	"github.com/fabric_assert/blockchain_bit/pkg/log"
 )
 
@@ -47,21 +49,41 @@ func NewCoinbaseTransaction(address string) *Transaction{
 }
 
 //生成转账交易
-func NewSimpleTransaction(from string,to string ,amount int)  *Transaction{
+func NewSimpleTransaction(from string,to string ,amount int,blockchain *BlockChain)  *Transaction{
 	var txInputs []*TxInput
 	var txOutputs []*TxOutput
 
-	//消费
-	txInput:=&TxInput{[]byte("8df099565e4bb780b86082988e363841916fed7528738e02750708914f1c3c69"),0,from}
-	txInputs=append(txInputs,txInput)
+	//查找指定地址的可用UTXO
+	money,spendableUTXODic:=blockchain.FindSpendableUTXO(from,int64(amount))
+	fmt.Printf("money:%v\n",money)
 
+	for txHash,indexArray:=range spendableUTXODic{
+		txHashBytes,_:=hex.DecodeString(txHash)
+		for _,index:=range indexArray{
+			//此处的输出是需要消费的，必然会被其他的交易的输入所引用
+			//消费
+			txInput:=&TxInput{txHashBytes,index,from}
+			txInputs=append(txInputs,txInput)
+		}
+	}
+
+	//转账
 	txOutPut:=&TxOutput{int64(amount),to}
 	txOutputs=append(txOutputs,txOutPut)
-	txOutPut=&TxOutput{10-int64(amount),from}
+	//找零
+	txOutPut=&TxOutput{money-int64(amount),from}
 	txOutputs=append(txOutputs,txOutPut)
 
+	//生成交易
 	tx:=&Transaction{nil,txInputs,txOutputs}
 	tx.HashTransaction()
 
 	return tx
+}
+
+
+//判断指定交易是否是一个coinbase交易
+func (tx *Transaction)IsCoinbaseTransaction() bool {
+	//fmt.Printf("iscoinbase txhash:%s,vout=%d",tx.Vins[0].TxHash,tx.Vins[0].Vout)
+	return len(tx.Vins[0].TxHash)==0 && tx.Vins[0].Vout==-1
 }
