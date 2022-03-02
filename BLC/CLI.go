@@ -16,6 +16,8 @@ type CLI struct {
 //展示用法
 func PrintUsage() {
 	fmt.Println("Usage:")
+	fmt.Printf("\tcreatewallet --创建钱包. \n")
+	fmt.Printf("\tgetaddresslist --获取钱包地址列表. \n")
 	fmt.Printf("\tcreateblockchain  -address address -- 地址.\n")
 	fmt.Printf("\taddblock -data  DATA  -- 交易数据.\n")
 	fmt.Printf("\tprintblockchain -- 输出区块链的信息.\n")
@@ -30,58 +32,24 @@ func IsValidArgs() {
 		os.Exit(1)
 	}
 }
-
-//查询余额
-func (cli *CLI)getBalance(from string) {
-	blockchain := BlockchainObject() //获取区块链对象
-	defer blockchain.DB.Close()
-	amount:=blockchain.getBalance(from)
-	fmt.Printf("\t地址：%s的余额为%d\n",from,amount)
-}
-func (cli *CLI) send(from, to, amount []string) {
-	if dbExists() == false {
-		log.Info("数据库不存在")
-		os.Exit(1)
-	}
-	blockchain := BlockchainObject() //获取区块链对象
-	defer blockchain.DB.Close()
-	blockchain.MineNewBlock(from,to,amount)
-}
-
-//添加区块
-func (cli *CLI) addBlock(txs []*Transaction) {
-	if dbExists() == false {
-		log.Info("数据库不存在")
-		os.Exit(1)
-	}
-	blockchain := BlockchainObject()
-	defer blockchain.DB.Close()
-	blockchain.AddBlock(txs)
-}
-
-//输出区块链信息
-
-func (cli *CLI) printchain() {
-	if dbExists() == false {
-		log.Info("数据库不存在")
-		os.Exit(1)
-	}
-	blockchain := BlockchainObject()
-	defer blockchain.DB.Close()
-	blockchain.PrintChain()
-}
-
-//创建创世区块
-func (cli *CLI) createBlockchinWithGenesis(address string) {
-	CreateBlockChainWithGenesisBlock(address)
-}
-
+////添加区块
+//func (cli *CLI) addBlock(txs []*Transaction) {
+//	if dbExists() == false {
+//		log.Info("数据库不存在")
+//		os.Exit(1)
+//	}
+//	blockchain := BlockchainObject()
+//	defer blockchain.DB.Close()
+//	blockchain.AddBlock(txs)
+//}
 //运行函数
 func (cli *CLI) Run() {
 	//1. 检测参数数量
 	IsValidArgs()
 
 	//2. 新建命令
+	createWalletsCmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
+	getAddressListsCmd := flag.NewFlagSet("getaddresslist", flag.ExitOnError)
 	addBlockCmd := flag.NewFlagSet("addblock", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
 	createBlcWithGenesisCmd := flag.NewFlagSet("createblockchain", flag.ExitOnError)
@@ -89,7 +57,7 @@ func (cli *CLI) Run() {
 	getBalanceCmd := flag.NewFlagSet("getbalance", flag.ExitOnError)
 
 	//3. 获取命令行参数
-	flagAddBlockArg := addBlockCmd.String("data", "send 100 BTC to everyone", "交易数据...")
+	//flagAddBlockArg := addBlockCmd.String("data", "send 100 BTC to everyone", "交易数据...")
 	flagCreateBlcWithGenesisArg := createBlcWithGenesisCmd.String("address", "", "地址...")
 	flagFromArg := sendCmd.String("from", "", "发送者")
 	flagToArg := sendCmd.String("to", "", "接收者")
@@ -98,6 +66,17 @@ func (cli *CLI) Run() {
 	//flagPrintChainArg:=printChainCmd.String("data","send 100 BTC to everyone","交易数据")
 	//flagcreateBlcWithGenesisArg:=createBlcWithGenesisCmd.String("data","send 100 BTC to everyone","交易数据")
 	switch os.Args[1] {
+
+	case "createwallet":
+		err := createWalletsCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panicf("parse cmd of createwallet failed! %v\n", err.Error())
+		}
+	case "getaddresslist":
+		err := getAddressListsCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panicf("parse cmd of getaddresslist failed! %v\n", err.Error())
+		}
 	case "getbalance":
 		err:=getBalanceCmd.Parse(os.Args[2:])
 		if err != nil {
@@ -153,14 +132,14 @@ func (cli *CLI) Run() {
 		cli.send(utils.JSONToArray(*flagFromArg), utils.JSONToArray(*flagToArg), utils.JSONToArray(*flagAmountArg))
 	}
 
-	if addBlockCmd.Parsed() {
-		if *flagAddBlockArg == "" {
-			PrintUsage()
-			os.Exit(1)
-		}
-
-		cli.addBlock([]*Transaction{})
-	}
+	//if addBlockCmd.Parsed() {
+	//	if *flagAddBlockArg == "" {
+	//		PrintUsage()
+	//		os.Exit(1)
+	//	}
+	//
+	//	cli.addBlock([]*Transaction{})
+	//}
 
 	if printChainCmd.Parsed() {
 		cli.printchain()
@@ -172,6 +151,14 @@ func (cli *CLI) Run() {
 			os.Exit(1)
 		}
 		cli.createBlockchinWithGenesis(*flagCreateBlcWithGenesisArg)
+	}
+
+	if createWalletsCmd.Parsed(){
+		cli.CreateWallets()
+	}
+
+	if getAddressListsCmd.Parsed(){
+		cli.getAddressLists()
 	}
 
 }

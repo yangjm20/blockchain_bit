@@ -8,7 +8,6 @@ type TxInput struct {
 }
 
 //判断能不能引用指定地址的OUTPUT
-
 func (in *TxInput) UnLockWithAddress(address string) bool {
 	return in.ScriptSig == address
 }

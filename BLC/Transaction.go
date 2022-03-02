@@ -49,12 +49,12 @@ func NewCoinbaseTransaction(address string) *Transaction{
 }
 
 //生成转账交易
-func NewSimpleTransaction(from string,to string ,amount int,blockchain *BlockChain)  *Transaction{
+func NewSimpleTransaction(from string,to string ,amount int,blockchain *BlockChain,txs []*Transaction)  *Transaction{
 	var txInputs []*TxInput
 	var txOutputs []*TxOutput
 
 	//查找指定地址的可用UTXO
-	money,spendableUTXODic:=blockchain.FindSpendableUTXO(from,int64(amount))
+	money,spendableUTXODic:=blockchain.FindSpendableUTXO(from,int64(amount),txs)
 	fmt.Printf("money:%v\n",money)
 
 	for txHash,indexArray:=range spendableUTXODic{
